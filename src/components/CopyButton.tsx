@@ -4,19 +4,22 @@ import { useState } from 'react';
 export default function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async () => {
+  const handleCopy = async (e: React.MouseEvent) => {
+    // This stops the click from "bubbling up" to the Link/Card
+    e.preventDefault();
+    e.stopPropagation();
+    
     await navigator.clipboard.writeText(text);
     setCopied(true);
-    // Reset the "Copied!" text after 2 seconds
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <button 
       onClick={handleCopy}
-      className="absolute top-4 right-4 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-1.5 px-3 rounded-md transition-colors border border-slate-700"
+      className="bg-slate-900 hover:bg-black text-white text-[10px] font-bold py-1.5 px-3 rounded shadow-lg border border-white/20 transition-all active:scale-95 whitespace-nowrap"
     >
-      {copied ? 'COPIED!' : 'COPY'}
+      {copied ? '✓ COPIED' : 'COPY PROMPT'}
     </button>
   );
 }

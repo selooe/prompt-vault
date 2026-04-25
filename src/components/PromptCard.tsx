@@ -3,6 +3,7 @@
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import CopyButton from '@/components/CopyButton';
 
 interface PromptCardProps {
   id: string; // We need the ID to know which one to delete
@@ -49,6 +50,12 @@ export default function PromptCard({ id, title, subject, style, fullPrompt, imag
           <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
         </svg>
       </button>
+
+      {/* QUICK COPY BUTTON - Top Left */}
+      {/*<div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"> */}
+      <div className="absolute top-3 left-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <CopyButton text={fullPrompt} />
+      </div>
 
       {imageUrl ? (
         <div className="relative overflow-hidden">

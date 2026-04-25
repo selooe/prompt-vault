@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import CopyButton from '@/components/CopyButton';
+import { getYouTubeEmbedUrl } from '@/lib/videoUtils';
 
 // Note the 'Promise' type here for the latest Next.js versions
 export default async function PromptDetail({ 
@@ -18,6 +19,9 @@ export default async function PromptDetail({
     .eq('id', id)
     .single();
 
+    // This turns the raw YouTube link into a player link
+  const embedUrl = getYouTubeEmbedUrl(prompt?.video_url);
+
   if (error || !prompt) {
     return notFound();
   }
@@ -31,18 +35,41 @@ export default async function PromptDetail({
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="bg-slate-100 border-b border-slate-200">
-            {prompt.image_url ? (
-              <img src={prompt.image_url} alt={prompt.title} className="w-full max-h-[600px] object-contain mx-auto" />
-            ) : prompt.pdf_url ? (
-              <div className="p-20 text-center">
-                <p className="mb-4 text-slate-500 font-medium">PDF Document Saved</p>
-                <a href={prompt.pdf_url} target="_blank" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-block">
-                  Open PDF File
-                </a>
-              </div>
-            ) : (
-              <div className="h-64 flex items-center justify-center text-slate-400">No media attached</div>
-            )}
+          {embedUrl ? (
+            /* 1. Show Video Player */
+            <div className="w-full aspect-video">
+              <iframe
+                src={embedUrl}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ) : prompt.image_url ? (
+            /* 2. Show Image */
+            <img 
+              src={prompt.image_url} 
+              alt={prompt.title} 
+              className="w-full max-h-[600px] object-contain mx-auto" 
+            />
+          ) : prompt.pdf_url ? (
+            /* 3. Show PDF Link */
+            <div className="p-20 text-center">
+              <p className="mb-4 text-slate-500 font-medium">PDF Document Saved</p>
+              <a 
+                href={prompt.pdf_url} 
+                target="_blank" 
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Open PDF File
+              </a>
+            </div>
+          ) : (
+            /* 4. Placeholder */
+            <div className="h-64 flex items-center justify-center text-slate-400">
+              No media attached
+            </div>
+          )}
           </div>
 
           <div className="p-8">

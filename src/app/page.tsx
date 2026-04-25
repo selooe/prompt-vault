@@ -82,6 +82,7 @@ export default function Home() {
                 style={prompt.style}
                 fullPrompt={prompt.full_prompt}
                 imageUrl={prompt.image_url}
+                videoUrl={prompt.video_url}
               />
             ))}
           </div>
@@ -90,7 +91,7 @@ export default function Home() {
             <p className="text-slate-400 text-lg">No prompts found matching "{searchTerm}"</p>
           </div>
         )}
-      </div>
+      </div> 
     </main>
   );
 }

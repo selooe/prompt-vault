@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import CopyButton from '@/components/CopyButton';
+import { getYouTubeEmbedUrl } from '@/lib/videoUtils';
 
 interface PromptCardProps {
   id: string; // We need the ID to know which one to delete
@@ -14,7 +15,7 @@ interface PromptCardProps {
   imageUrl?: string;
 }
 
-export default function PromptCard({ id, title, subject, style, fullPrompt, imageUrl }: PromptCardProps) {
+export default function PromptCard({ id, title, subject, style, fullPrompt, imageUrl, videoUrl }: any) {
   const router = useRouter();
 
   const handleDelete = async () => {
@@ -35,6 +36,9 @@ export default function PromptCard({ id, title, subject, style, fullPrompt, imag
     }
   };
 
+      // This takes the raw link and turns it into an embed link
+      const embedUrl = getYouTubeEmbedUrl(videoUrl);
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group relative break-inside-avoid mb-6">
       {/* ... all the other code (Delete button, Image, text, etc.) ... */}
@@ -53,21 +57,34 @@ export default function PromptCard({ id, title, subject, style, fullPrompt, imag
 
       {/* QUICK COPY BUTTON - Top Left */}
       {/*<div className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"> */}
-      <div className="absolute top-3 left-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      <div className="absolute top-3 left-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">f
         <CopyButton text={fullPrompt} />
       </div>
 
-      {imageUrl ? (
-        <div className="relative overflow-hidden">
-        <img 
-          src={imageUrl} 
-          alt={title} 
-          className="w-full h-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]" 
-        />
-        </div>
-      ) : (
-        <div className="h-32 bg-slate-100 flex items-center justify-center text-slate-400">No Image</div>
-      )}
+      <div className="relative aspect-video bg-slate-100 overflow-hidden">
+        {/* 1. Check for Video first */}
+        {embedUrl ? (
+          <iframe
+            src={embedUrl}
+            className="w-full h-full border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : imageUrl ? (
+          /* 2. If no video, check for Image */
+          <img 
+            src={imageUrl} 
+            alt={title} 
+            className="w-full h-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]" 
+          />
+        ) : (
+          /* 3. If neither exists, show placeholder */
+          <div className="h-48 flex items-center justify-center text-slate-400">
+            No Media Attached
+          </div>
+        )}
+      </div>
+
       
       <div className="p-5">
         <h3 className="font-bold text-slate-900 mb-1">{title}</h3>

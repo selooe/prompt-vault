@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link'; // Added missing import
-import { createBrowserClient } from '@supabase/ssr';
 import PromptCard from '@/components/PromptCard'; // Added missing import
+import { supabase } from '@/lib/supabase';
 
 export default function Home() {
   // 1. All necessary states
@@ -12,11 +12,6 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState(''); // Added missing state
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   // 2. Single secure effect: Check Auth then Fetch Data
   useEffect(() => {

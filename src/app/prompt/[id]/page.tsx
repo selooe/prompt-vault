@@ -94,6 +94,18 @@ export default async function PromptDetail({
                 </pre>
               </div>
             </div>
+          {/* USAGE INSTRUCTIONS SECTION */}
+          {prompt.usage_instructions && (
+            <div className="mt-8 p-6 bg-amber-50 border border-amber-200 rounded-2xl">
+              <div className="flex items-center gap-2 mb-3 text-amber-800 font-bold">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                <h3>Usage & Customization Guide</h3>
+              </div>
+              <p className="text-amber-900 leading-relaxed whitespace-pre-wrap italic">
+                {prompt.usage_instructions}
+              </p>
+            </div>
+          )}
           </div>
         </div>
       </div>

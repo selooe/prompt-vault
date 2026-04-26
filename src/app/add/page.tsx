@@ -12,6 +12,7 @@ export default function AddPrompt() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [videoUrl, setVideoUrl] = useState('');
+  const [usageInstructions, setUsageInstructions] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -56,6 +57,7 @@ export default function AddPrompt() {
         image_url: isPdf ? null : fileUrl,
         pdf_url: isPdf ? fileUrl : null,
         video_url: videoUrl,
+        usage_instructions: usageInstructions,
       },
     ]);
 
@@ -112,6 +114,16 @@ export default function AddPrompt() {
             onChange={(e) => setVideoUrl(e.target.value)}
           />
           <p className="text-xs text-slate-500 italic">Paste the link here to show a video player instead of an image.</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-slate-300 mb-2">Usage Instructions (Flex Guide)</label>
+          <textarea 
+            placeholder="e.g., 'Change the [Subject] to any aircraft part' or 'Works best with 16:9 aspect ratio'..."
+            className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 outline-none h-24" 
+            value={usageInstructions} 
+            onChange={(e) => setUsageInstructions(e.target.value)} 
+          />
         </div>
 
         <div>

@@ -1,32 +1,49 @@
-'use client'; // This allows us to use search state
+'use client';
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import PromptCard from '@/components/PromptCard';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // Added missing import
+import { createBrowserClient } from '@supabase/ssr';
+import PromptCard from '@/components/PromptCard'; // Added missing import
 
 export default function Home() {
-  const [prompts, setPrompts] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  // 1. All necessary states
+  const [prompts, setPrompts] = useState<any[]>([]); // Added missing state
+  const [searchTerm, setSearchTerm] = useState(''); // Added missing state
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // 2. Single secure effect: Check Auth then Fetch Data
   useEffect(() => {
-    fetchPrompts();
-  }, []);
+    const initializeVault = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        router.push('/login');
+        return;
+      }
 
-  async function fetchPrompts() {
-    const { data, error } = await supabase
-      .from('prompts')
-      .select('*')
-      .order('created_at', { ascending: false });
+      // User is authenticated, now fetch the prompts
+      const { data, error } = await supabase
+        .from('prompts')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setPrompts(data);
-    }
-    setLoading(false);
-  }
+      if (!error && data) {
+        setPrompts(data);
+      }
+      setLoading(false);
+    };
 
-  // Real-time filtering logic
+    initializeVault();
+  }, [router, supabase]);
+
+  // 3. Search logic
   const filteredPrompts = prompts.filter((p) => {
     const searchStr = searchTerm.toLowerCase();
     return (
@@ -36,6 +53,16 @@ export default function Home() {
     );
   });
 
+  // 4. Clean Loading State (Centered Spinner)
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // 5. Main UI (Private Gallery)
   return (
     <main className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-6xl mx-auto">
@@ -69,9 +96,7 @@ export default function Home() {
         </div>
 
         {/* MASONRY GALLERY */}
-        {loading ? (
-          <div className="text-center py-20 text-slate-400 font-medium">Loading vault...</div>
-        ) : filteredPrompts.length > 0 ? (
+        {filteredPrompts.length > 0 ? (
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
             {filteredPrompts.map((prompt) => (
               <PromptCard

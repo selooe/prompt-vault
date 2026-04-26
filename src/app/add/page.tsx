@@ -1,7 +1,7 @@
 'use client';
-import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createBrowserClient } from '@supabase/ssr'; // The 2026 standard
 
 export default function AddPrompt() {
   const [title, setTitle] = useState('');
@@ -10,50 +10,57 @@ export default function AddPrompt() {
   const [style, setStyle] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const [videoUrl, setVideoUrl] = useState('');
   const [usageInstructions, setUsageInstructions] = useState('');
+  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+// Create the client directly in the component
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/login');
+      }
+    };
+    checkUser();
+  }, []);
+
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
-  setLoading(true); // [cite: 5]
+  setLoading(true);
 
   try {
     let fileUrl = '';
-    
-    // 1. Handle file upload if it exists
-    if (file) { // [cite: 6]
+    if (file) {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`; // [cite: 7]
+      const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('vault-assets')
         .upload(filePath, file);
 
-      if (uploadError) { // [cite: 8]
-        alert('Error uploading file: ' + uploadError.message);
-        setLoading(false);
-        return;
-      }
+      if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('vault-assets')
-        .getPublicUrl(filePath); // [cite: 9]
-      fileUrl = publicUrl; // 
+        .getPublicUrl(filePath);
+      fileUrl = publicUrl;
     }
 
-    // 2. Determine file type for proper column mapping
     const isPdf = file?.type === 'application/pdf';
 
-    // 3. SINGLE INSERT: Save everything at once
     const { error: dbError } = await supabase.from('prompts').insert([
       {
         title,
         full_prompt: fullPrompt,
         subject,
         style,
-        // If it's a PDF, put the link in pdf_url, otherwise image_url
         image_url: isPdf ? null : fileUrl,
         pdf_url: isPdf ? fileUrl : null,
         video_url: videoUrl,
@@ -61,13 +68,10 @@ export default function AddPrompt() {
       },
     ]);
 
-    if (dbError) throw dbError; // [cite: 11]
-
-    // 4. Success! Redirect home
-    router.push('/'); // [cite: 14]
-
+    if (dbError) throw dbError;
+    router.push('/');
   } catch (err: any) {
-    alert('Error saving data: ' + err.message); // [cite: 13]
+    alert('Error saving data: ' + err.message);
   } finally {
     setLoading(false);
   }

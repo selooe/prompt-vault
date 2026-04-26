@@ -69,9 +69,22 @@ export default function Home() {
             <p className="text-slate-500 mt-1 font-medium">Your private repository of AI wisdom.</p>
           </div>
           
-          <Link href="/add" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-200 text-center">
-            + New Prompt
-          </Link>
+          <div className="flex items-center gap-4">
+            {/* LOGOUT BUTTON */}
+            <button 
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.push('/login'); // Immediate bounce to login
+              }}
+              className="text-slate-400 hover:text-red-500 font-bold transition-colors text-sm px-4"
+            >
+              Logout
+            </button>
+
+            <Link href="/add" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-blue-200 text-center">
+              + New Prompt
+            </Link>
+          </div>
         </div>
 
         {/* SEARCH BAR SECTION */}

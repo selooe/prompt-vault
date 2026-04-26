@@ -91,7 +91,7 @@ export default function PromptCard({ id, title, subject, style, fullPrompt, imag
         <p className="text-xs font-medium text-blue-600 uppercase tracking-wider mb-3">{style}</p>
         <p className="text-sm text-slate-600 line-clamp-2 italic mb-4">"{fullPrompt}"</p>
         <Link href={`/prompt/${id}`}>
-        <button className="w-full py-2 text-sm font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md transition-colors">
+        <button className="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 text-slate-900 font-bold rounded-xl transition-colors text-center block">
           View Details
         </button>
         </Link>

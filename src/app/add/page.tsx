@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createBrowserClient } from '@supabase/ssr'; // The 2026 standard
+import { createBrowserClient } from '@supabase/ssr';
 
 export default function AddPrompt() {
   const [title, setTitle] = useState('');
@@ -14,7 +14,6 @@ export default function AddPrompt() {
   const [usageInstructions, setUsageInstructions] = useState('');
   const router = useRouter();
 
-// Create the client directly in the component
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -28,58 +27,67 @@ export default function AddPrompt() {
       }
     };
     checkUser();
-  }, []);
+  }, [supabase, router]);
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    let fileUrl = '';
-    if (file) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
+    try {
+      // 1. GET THE CURRENT USER ID (THE "SIGNATURE")
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("You must be logged in to save prompts.");
+      }
 
-      const { error: uploadError } = await supabase.storage
-        .from('vault-assets')
-        .upload(filePath, file);
+      let fileUrl = '';
+      if (file) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
 
-      if (uploadError) throw uploadError;
+        const { error: uploadError } = await supabase.storage
+          .from('vault-assets')
+          .upload(filePath, file);
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('vault-assets')
-        .getPublicUrl(filePath);
-      fileUrl = publicUrl;
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('vault-assets')
+          .getPublicUrl(filePath);
+        fileUrl = publicUrl;
+      }
+
+      const isPdf = file?.type === 'application/pdf';
+
+      // 2. INCLUDE user_id IN THE INSERT
+      const { error: dbError } = await supabase.from('prompts').insert([
+        {
+          title,
+          full_prompt: fullPrompt,
+          subject,
+          style,
+          image_url: isPdf ? null : fileUrl,
+          pdf_url: isPdf ? fileUrl : null,
+          video_url: videoUrl,
+          usage_instructions: usageInstructions,
+          user_id: user.id, // <--- THIS MATCHES YOUR RLS POLICY
+        },
+      ]);
+
+      if (dbError) throw dbError;
+      router.push('/');
+    } catch (err: any) {
+      alert('Error saving data: ' + err.message);
+    } finally {
+      setLoading(false);
     }
-
-    const isPdf = file?.type === 'application/pdf';
-
-    const { error: dbError } = await supabase.from('prompts').insert([
-      {
-        title,
-        full_prompt: fullPrompt,
-        subject,
-        style,
-        image_url: isPdf ? null : fileUrl,
-        pdf_url: isPdf ? fileUrl : null,
-        video_url: videoUrl,
-        usage_instructions: usageInstructions,
-      },
-    ]);
-
-    if (dbError) throw dbError;
-    router.push('/');
-  } catch (err: any) {
-    alert('Error saving data: ' + err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <main className="max-w-2xl mx-auto p-8 text-white">
-      <h1 className="text-3xl font-bold mb-8 text-white">Add New Prompt</h1>
+      <h1 className="text-3xl font-bold mb-8">Add New Prompt</h1>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-sm font-medium mb-2">Title</label>
@@ -107,7 +115,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           />
         </div>
 
-        {/* YOUTUBE LINK INPUT */}
         <div className="space-y-2">
           <label className="block text-sm font-bold text-slate-300">YouTube Video URL (Optional)</label>
           <input
@@ -123,7 +130,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         <div>
           <label className="block text-sm font-bold text-slate-300 mb-2">Usage Instructions (Flex Guide)</label>
           <textarea 
-            placeholder="e.g., 'Change the [Subject] to any aircraft part' or 'Works best with 16:9 aspect ratio'..."
+            placeholder="e.g., 'Change the [Subject] to any aircraft part'..."
             className="w-full p-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 outline-none h-24" 
             value={usageInstructions} 
             onChange={(e) => setUsageInstructions(e.target.value)} 

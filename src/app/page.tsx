@@ -2,18 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link'; // Added missing import
-import PromptCard from '@/components/PromptCard'; // Added missing import
+import Link from 'next/link';
+import PromptCard from '@/components/PromptCard';
 import { supabase } from '@/lib/supabase';
 
 export default function Home() {
-  // 1. All necessary states
-  const [prompts, setPrompts] = useState<any[]>([]); // Added missing state
-  const [searchTerm, setSearchTerm] = useState(''); // Added missing state
+  const [prompts, setPrompts] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // 2. Single secure effect: Check Auth then Fetch Data
   useEffect(() => {
     const initializeVault = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -23,7 +21,6 @@ export default function Home() {
         return;
       }
 
-      // User is authenticated, now fetch the prompts
       const { data, error } = await supabase
         .from('prompts')
         .select('*')
@@ -36,9 +33,14 @@ export default function Home() {
     };
 
     initializeVault();
-  }, [router, supabase]);
+  }, [router]);
 
-  // 3. Search logic
+  // --- NEW: THE "INSTANT DELETE" HANDLER ---
+  // This function is passed to each card to update the UI state immediately
+  const handleDeleteFromState = (id: string) => {
+    setPrompts((prev) => prev.filter((p) => p.id !== id));
+  };
+
   const filteredPrompts = prompts.filter((p) => {
     const searchStr = searchTerm.toLowerCase();
     return (
@@ -48,7 +50,6 @@ export default function Home() {
     );
   });
 
-  // 4. Clean Loading State (Centered Spinner)
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -57,12 +58,10 @@ export default function Home() {
     );
   }
 
-  // 5. Main UI (Private Gallery)
   return (
     <main className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-6xl mx-auto">
         
-        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
           <div>
             <h1 className="text-4xl font-black text-slate-900 tracking-tight">PROMPT VAULT</h1>
@@ -70,11 +69,10 @@ export default function Home() {
           </div>
           
           <div className="flex items-center gap-4">
-            {/* LOGOUT BUTTON */}
             <button 
               onClick={async () => {
                 await supabase.auth.signOut();
-                router.push('/login'); // Immediate bounce to login
+                router.push('/login');
               }}
               className="text-slate-400 hover:text-red-500 font-bold transition-colors text-sm px-4"
             >
@@ -87,7 +85,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SEARCH BAR SECTION */}
         <div className="relative max-w-2xl mb-12">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -103,7 +100,6 @@ export default function Home() {
           />
         </div>
 
-        {/* MASONRY GALLERY */}
         {filteredPrompts.length > 0 ? (
           <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
             {filteredPrompts.map((prompt) => (
@@ -116,6 +112,8 @@ export default function Home() {
                 fullPrompt={prompt.full_prompt}
                 imageUrl={prompt.image_url}
                 videoUrl={prompt.video_url}
+                // --- PASS THE NEW HANDLER HERE ---
+                onDeleteSuccess={handleDeleteFromState}
               />
             ))}
           </div>

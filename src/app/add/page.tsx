@@ -37,6 +37,9 @@ export default function AddPrompt() {
       // 1. GET THE CURRENT USER ID (THE "SIGNATURE")
       const { data: { user } } = await supabase.auth.getUser();
       
+      // ADD THIS ALERT TO SEE WHAT IS BEING SENT
+      alert("Current User ID: " + user?.id);
+      
       if (!user) {
         throw new Error("You must be logged in to save prompts.");
       }
